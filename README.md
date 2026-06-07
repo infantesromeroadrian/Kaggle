@@ -4,9 +4,12 @@ My Kaggle competition solutions — one subdirectory per challenge.
 
 ## Solutions
 
-| Challenge | Task | Metric | Result |
-|---|---|---|---|
-| [playground-s6e6](./playground-s6e6) | Stellar classification (GALAXY / STAR / QSO) from synthetic SDSS photometry | `balanced_accuracy` | Public LB **0.96625**, rank **361 / 965 teams (top ~37%)**, 2 submissions, snapshot 2026-06-07 |
+| Challenge (dir) | Task | Metric | Best Result | Notes |
+|---|---|---|---|---|
+| [playground-s6e6](./playground-s6e6) | Stellar classification (GALAXY / STAR / QSO) from synthetic SDSS photometry | `balanced_accuracy` | Public LB **0.96625**, rank **361 / 965 (top 37%)** | Includes code |
+| [playground-s6e4](./playground-s6e4) | Irrigation-need prediction (multiclass) | `balanced_accuracy` | Public LB **0.97111** / Private LB **0.97242** | Documentation of results only |
+| [playground-s6e3](./playground-s6e3) | Customer churn prediction (binary) | `ROC AUC` | Public LB **0.91461** / Private LB **0.91580** | Documentation of results only |
+| [triagegeist](./triagegeist) | Emergency-triage acuity prediction (hackathon) | — | See subdir | Includes code |
 
 ## Methodology
 

@@ -1,0 +1,14 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+data/*.csv
+data/original/
+models/*.pkl
+models/*.joblib
+models/*.bin
+.ipynb_checkpoints/
+.DS_Store
+*.egg-info/
+assets/*.png
+assets/*.jpg

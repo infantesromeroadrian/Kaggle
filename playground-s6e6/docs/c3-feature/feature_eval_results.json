@@ -1,0 +1,271 @@
+{
+  "seed": 42,
+  "n_splits": 5,
+  "metric": "balanced_accuracy",
+  "sigma_k": 2.0,
+  "lgbm_params": {
+    "objective": "multiclass",
+    "num_class": 3,
+    "n_estimators": 300,
+    "learning_rate": 0.05,
+    "num_leaves": 63,
+    "max_depth": -1,
+    "subsample": 0.8,
+    "subsample_freq": 1,
+    "colsample_bytree": 0.8,
+    "reg_lambda": 1.0,
+    "random_state": 42,
+    "deterministic": true,
+    "force_row_wise": true,
+    "num_threads": 1,
+    "n_jobs": 1,
+    "verbose": -1
+  },
+  "baseline_config": "baseline_raw",
+  "class_order": [
+    "GALAXY",
+    "QSO",
+    "STAR"
+  ],
+  "mlflow_logged": false,
+  "elapsed_seconds": 976.7,
+  "results": [
+    {
+      "name": "baseline_raw",
+      "features": [
+        "alpha",
+        "delta",
+        "u",
+        "g",
+        "r",
+        "i",
+        "z",
+        "redshift",
+        "spectral_type",
+        "galaxy_population"
+      ],
+      "categorical": [
+        "spectral_type",
+        "galaxy_population"
+      ],
+      "fold_scores": [
+        0.965047916170398,
+        0.9643634507725184,
+        0.9643845610145031,
+        0.9642461504759883,
+        0.9643537056482687
+      ],
+      "mean": 0.9644791568163352,
+      "std": 0.0002883932757000472,
+      "paired_diff_mean": null,
+      "paired_diff_sem": null,
+      "defensible": null
+    },
+    {
+      "name": "colors",
+      "features": [
+        "alpha",
+        "delta",
+        "u",
+        "g",
+        "r",
+        "i",
+        "z",
+        "redshift",
+        "spectral_type",
+        "galaxy_population",
+        "u_g",
+        "g_r",
+        "r_i",
+        "i_z"
+      ],
+      "categorical": [
+        "spectral_type",
+        "galaxy_population"
+      ],
+      "fold_scores": [
+        0.9652045794195173,
+        0.9647724764994496,
+        0.9640324820562923,
+        0.9642313301863297,
+        0.9645868983651901
+      ],
+      "mean": 0.9645655533053559,
+      "std": 0.00041170310765971553,
+      "paired_diff_mean": 8.639648902051267e-05,
+      "paired_diff_sem": 0.00012905071277726572,
+      "defensible": false
+    },
+    {
+      "name": "colors_redshift_log",
+      "features": [
+        "alpha",
+        "delta",
+        "u",
+        "g",
+        "r",
+        "i",
+        "z",
+        "redshift",
+        "spectral_type",
+        "galaxy_population",
+        "u_g",
+        "g_r",
+        "r_i",
+        "i_z",
+        "redshift_log"
+      ],
+      "categorical": [
+        "spectral_type",
+        "galaxy_population"
+      ],
+      "fold_scores": [
+        0.9651520168501161,
+        0.9643623430403497,
+        0.9640997941261906,
+        0.9646127316805228,
+        0.9644083849735011
+      ],
+      "mean": 0.9645270541341361,
+      "std": 0.00035261374528273927,
+      "paired_diff_mean": 4.7897317800771334e-05,
+      "paired_diff_sem": 0.0001043626375027902,
+      "defensible": false
+    },
+    {
+      "name": "colors_drop_r",
+      "features": [
+        "alpha",
+        "delta",
+        "u",
+        "g",
+        "i",
+        "z",
+        "redshift",
+        "spectral_type",
+        "galaxy_population",
+        "u_g",
+        "g_r",
+        "r_i",
+        "i_z"
+      ],
+      "categorical": [
+        "spectral_type",
+        "galaxy_population"
+      ],
+      "fold_scores": [
+        0.9651537839543618,
+        0.9646875387305666,
+        0.9638659298593186,
+        0.9642438617898913,
+        0.964681679291338
+      ],
+      "mean": 0.9645265587250952,
+      "std": 0.0004381179055762262,
+      "paired_diff_mean": 4.7401908759958644e-05,
+      "paired_diff_sem": 0.00015517031146822902,
+      "defensible": false
+    },
+    {
+      "name": "colors_drop_alpha",
+      "features": [
+        "delta",
+        "u",
+        "g",
+        "r",
+        "i",
+        "z",
+        "redshift",
+        "spectral_type",
+        "galaxy_population",
+        "u_g",
+        "g_r",
+        "r_i",
+        "i_z"
+      ],
+      "categorical": [
+        "spectral_type",
+        "galaxy_population"
+      ],
+      "fold_scores": [
+        0.955797502565188,
+        0.9555565124862336,
+        0.9559629458325708,
+        0.954862776300227,
+        0.9552491963134603
+      ],
+      "mean": 0.9554857866995359,
+      "std": 0.00039343785391656393,
+      "paired_diff_mean": -0.008993370116799349,
+      "paired_diff_sem": 0.00017207367313081402,
+      "defensible": false
+    },
+    {
+      "name": "colors_drop_delta",
+      "features": [
+        "alpha",
+        "u",
+        "g",
+        "r",
+        "i",
+        "z",
+        "redshift",
+        "spectral_type",
+        "galaxy_population",
+        "u_g",
+        "g_r",
+        "r_i",
+        "i_z"
+      ],
+      "categorical": [
+        "spectral_type",
+        "galaxy_population"
+      ],
+      "fold_scores": [
+        0.9583861838015723,
+        0.9585827269810162,
+        0.9575460313239935,
+        0.9578756532016853,
+        0.9586425277351581
+      ],
+      "mean": 0.9582066246086851,
+      "std": 0.00042652821569583236,
+      "paired_diff_mean": -0.006272532207650205,
+      "paired_diff_sem": 0.00022786193544979737,
+      "defensible": false
+    },
+    {
+      "name": "colors_drop_galaxy_population",
+      "features": [
+        "alpha",
+        "delta",
+        "u",
+        "g",
+        "r",
+        "i",
+        "z",
+        "redshift",
+        "spectral_type",
+        "u_g",
+        "g_r",
+        "r_i",
+        "i_z"
+      ],
+      "categorical": [
+        "spectral_type"
+      ],
+      "fold_scores": [
+        0.9650384306428043,
+        0.9646262804250701,
+        0.9639019483065238,
+        0.9641786762854285,
+        0.964535322991896
+      ],
+      "mean": 0.9644561317303445,
+      "std": 0.0003894597922317479,
+      "paired_diff_mean": -2.3025085990746598e-05,
+      "paired_diff_sem": 0.0001298020185457229,
+      "defensible": false
+    }
+  ]
+}

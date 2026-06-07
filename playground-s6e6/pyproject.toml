@@ -1,0 +1,63 @@
+[project]
+name = "playground-s6e6"
+version = "0.1.0"
+description = "Kaggle Playground S6E6 — stellar classification (GALAXY/STAR/QSO)"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas",
+    "numpy",
+    "scikit-learn",
+    # Gradient-boosted baseline + C3 feature-ablation harness (src/feature_eval.py,
+    # src/eda.py). Pinned-major to keep CV numbers reproducible across machines:
+    # determinism flags only guarantee identical results within the same LightGBM
+    # build, so the comparison must run on a known version.
+    "lightgbm>=4.6,<5",
+    # SHAP feature-importance baseline used by src/eda.py (C2 ceiling signal).
+    "shap>=0.45",
+    # Bayesian hyperparameter search for the C5 POC (src/tune.py, BL-011).
+    # TPESampler(seed=42) + MedianPruner give a reproducible, pruned study; the
+    # study is the search engine, the frozen-fold CV harness is the objective.
+    "optuna>=3.6,<5",
+    # C6 ENSEMBLE base learners (src/ensemble.py). Two gradient-boosting families
+    # with DIFFERENT inductive biases than LightGBM, so a soft-voting blend can
+    # average out uncorrelated per-model errors:
+    #   - CatBoost: ordered boosting + native categorical handling (no manual
+    #     encoding of spectral_type / galaxy_population).
+    #   - XGBoost: level-wise depth-first trees (vs LightGBM's leaf-wise), with
+    #     native categorical support via enable_categorical.
+    # Pinned-major like lightgbm so the blended CV numbers stay reproducible: the
+    # determinism of a GBDT solution is only guaranteed within one library build.
+    "catboost>=1.2,<2",
+    "xgboost>=2.0,<3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-cov",
+]
+
+[project.optional-dependencies]
+# MLflow experiment tracking is OPTIONAL: the feature-eval harness degrades
+# gracefully to its canonical JSON record when mlflow is absent (see
+# src/feature_eval._try_log_mlflow). Install with: uv sync --extra tracking.
+tracking = [
+    "mlflow>=2.12",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["src/tests"]
+addopts = "-v --tb=short --strict-markers"
+
+[tool.coverage.run]
+# Measure the pure-logic modules. eda/feature_eval orchestration that needs the
+# real CSVs (heavy CV) is exercised by running the scripts, not by unit coverage.
+source = ["src.data_loader", "src.features"]
+omit = ["src/tests/*", "*/__init__.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]

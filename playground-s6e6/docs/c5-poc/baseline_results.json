@@ -1,0 +1,68 @@
+{
+  "name": "baseline_lgbm_raw",
+  "seed": 42,
+  "metric": "balanced_accuracy",
+  "canonical_balanced_accuracy": 0.96448,
+  "baseline_tolerance": 0.0001,
+  "gate_passed": true,
+  "drift_vs_canonical": 8.431836647782021e-07,
+  "fold_scores": [
+    0.965047916170398,
+    0.9643634507725184,
+    0.9643845610145031,
+    0.9642461504759883,
+    0.9643537056482687
+  ],
+  "mean": 0.9644791568163352,
+  "std": 0.0002883932757000472,
+  "features": [
+    "alpha",
+    "delta",
+    "u",
+    "g",
+    "r",
+    "i",
+    "z",
+    "redshift",
+    "spectral_type",
+    "galaxy_population"
+  ],
+  "categorical": [
+    "spectral_type",
+    "galaxy_population"
+  ],
+  "lgbm_params": {
+    "objective": "multiclass",
+    "num_class": 3,
+    "n_estimators": 300,
+    "learning_rate": 0.05,
+    "num_leaves": 63,
+    "max_depth": -1,
+    "subsample": 0.8,
+    "subsample_freq": 1,
+    "colsample_bytree": 0.8,
+    "reg_lambda": 1.0,
+    "random_state": 42,
+    "deterministic": true,
+    "force_row_wise": true,
+    "num_threads": 1,
+    "n_jobs": 1,
+    "verbose": -1
+  },
+  "provenance": {
+    "train_csv_sha256": "da2c5118c96d1958ed2cb402651665b3d622403807a8deea3b7fb0a70fe70e4a",
+    "folds_sha256": "a0a196208e0239eab31f89076f8d57cf9ce0f9470ad8e11931d2126fb7635a54",
+    "lightgbm_version": "4.6.0",
+    "sklearn_version": "1.9.0",
+    "numpy_version": "2.4.6",
+    "python_version": "3.12.13",
+    "platform": "Linux-x86_64"
+  },
+  "class_order": [
+    "GALAXY",
+    "QSO",
+    "STAR"
+  ],
+  "elapsed_seconds": 119.6,
+  "mlflow_run_id": "eb43001ff60b43079417d02ca910a32a"
+}

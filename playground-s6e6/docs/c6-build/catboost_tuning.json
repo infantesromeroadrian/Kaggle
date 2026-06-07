@@ -1,0 +1,38 @@
+{
+  "seed": 42,
+  "n_splits": 5,
+  "metric": "balanced_accuracy",
+  "sigma_k": 2.0,
+  "model": "catboost",
+  "device": "GPU",
+  "n_trials_requested": 30,
+  "n_trials_completed": 17,
+  "n_trials_pruned": 0,
+  "timeout_s": 1320,
+  "elapsed_seconds": 1389.6,
+  "best_trial_number": 16,
+  "best_search_mean": 0.9626661480593108,
+  "best_params": {
+    "depth": 7,
+    "learning_rate": 0.14176151277502008,
+    "l2_leaf_reg": 1.5697175003232022,
+    "border_count": 254,
+    "random_strength": 2.570436616279238
+  },
+  "best_iterations_fixed": 999,
+  "report_fold_scores": [
+    0.9631890237686083,
+    0.962621913454118,
+    0.9626388679380228,
+    0.9622840872904344,
+    0.9625737911912231
+  ],
+  "report_mean": 0.9626615367284813,
+  "report_std": 0.00029342590649931267,
+  "mlflow_parent_run_id": "907362467f5f4269a2196fcc46bdc8f7",
+  "class_order": [
+    "GALAXY",
+    "QSO",
+    "STAR"
+  ]
+}

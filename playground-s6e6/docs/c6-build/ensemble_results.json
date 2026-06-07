@@ -1,0 +1,142 @@
+{
+  "seed": 42,
+  "n_splits": 5,
+  "metric": "balanced_accuracy",
+  "sigma_k": 2.0,
+  "cpu_threads": 4,
+  "catboost_device": "GPU",
+  "catboost_tuned": true,
+  "xgboost_tuned": true,
+  "blend": "soft_voting",
+  "reference": "c5_lightgbm_tuned",
+  "reference_scores": [
+    0.9655839918664189,
+    0.9647969600442231,
+    0.9646577267381039,
+    0.9645635117894887,
+    0.964725598898274
+  ],
+  "lgbm_fidelity_ok": true,
+  "class_order": [
+    "GALAXY",
+    "QSO",
+    "STAR"
+  ],
+  "models": [
+    {
+      "name": "lightgbm",
+      "fold_scores": [
+        0.9655839918664189,
+        0.9647969600442231,
+        0.9646577267381039,
+        0.9645635117894887,
+        0.964725598898274
+      ],
+      "mean": 0.9648655578673017,
+      "std": 0.0003673873151908503,
+      "paired_diff_mean": null,
+      "paired_diff_sem": null,
+      "defensible": null
+    },
+    {
+      "name": "catboost",
+      "fold_scores": [
+        0.9631890237686083,
+        0.962621913454118,
+        0.9626388679380228,
+        0.9622840872904344,
+        0.9625737911912231
+      ],
+      "mean": 0.9626615367284813,
+      "std": 0.00029342590649931267,
+      "paired_diff_mean": -0.0022040211388204335,
+      "paired_diff_sem": 6.324447268337915e-05,
+      "defensible": false
+    },
+    {
+      "name": "xgboost",
+      "fold_scores": [
+        0.9653865931248512,
+        0.964624486192602,
+        0.9645144180964617,
+        0.9649023266082968,
+        0.9647214625956972
+      ],
+      "mean": 0.9648298573235816,
+      "std": 0.00030614871357607465,
+      "paired_diff_mean": -3.570054371995202e-05,
+      "paired_diff_sem": 9.942102538404396e-05,
+      "defensible": false
+    },
+    {
+      "name": "blend_equal",
+      "fold_scores": [
+        0.9655575941572963,
+        0.9649443979076776,
+        0.9646875457228782,
+        0.964575775269935,
+        0.9649074087882611
+      ],
+      "mean": 0.9649345443692094,
+      "std": 0.0003402199489425756,
+      "paired_diff_mean": 6.898650190789724e-05,
+      "paired_diff_sem": 4.0455825478069375e-05,
+      "defensible": false
+    },
+    {
+      "name": "blend_nested_weights",
+      "fold_scores": [
+        0.9660882834487537,
+        0.9650752527147279,
+        0.9650636441146174,
+        0.96522666389521,
+        0.9653456417243212
+      ],
+      "mean": 0.965359897179526,
+      "std": 0.00037875829576661544,
+      "paired_diff_mean": 0.0004943393122243345,
+      "paired_diff_sem": 7.03181237054554e-05,
+      "defensible": true,
+      "per_fold_weights": [
+        [
+          0.5,
+          0.08333333333333333,
+          0.4166666666666667
+        ],
+        [
+          0.5,
+          0.08333333333333333,
+          0.4166666666666667
+        ],
+        [
+          0.5,
+          0.08333333333333333,
+          0.4166666666666667
+        ],
+        [
+          0.5,
+          0.08333333333333333,
+          0.4166666666666667
+        ],
+        [
+          0.5,
+          0.08333333333333333,
+          0.4166666666666667
+        ]
+      ]
+    }
+  ],
+  "blend_equal_beats_lightgbm_point": true,
+  "blend_equal_beats_lightgbm_defensibly": false,
+  "blend_nested_beats_lightgbm_defensibly": true,
+  "shipped_blend": "nested_weights",
+  "shipped_full_train_weights": [
+    0.5,
+    0.08333333333333333,
+    0.4166666666666667
+  ],
+  "reaches_target_0_97": false,
+  "submission_path": "data/submission_c6_ensemble_tuned.csv",
+  "elapsed_seconds": 472.2,
+  "mlflow_logged": true
+}

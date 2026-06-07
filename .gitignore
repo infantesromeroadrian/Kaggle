@@ -1,0 +1,31 @@
+# Data (pesado, descargable vía kaggle API)
+**/data/
+*.csv
+*.zip
+*.parquet
+
+# Submissions generadas
+**/submissions/*.csv
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+.coverage
+
+# MLflow / DVC artefactos locales
+mlruns/
+.dvc/cache/
+
+# Claude worktrees
+.claude/worktrees/
+
+# OS
+.DS_Store
+
+# Engram local memory
+.engram/

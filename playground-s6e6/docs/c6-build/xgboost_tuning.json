@@ -1,0 +1,42 @@
+{
+  "seed": 42,
+  "n_splits": 5,
+  "metric": "balanced_accuracy",
+  "sigma_k": 2.0,
+  "model": "xgboost",
+  "device": "CPU",
+  "cpu_threads": 4,
+  "n_trials_requested": 15,
+  "n_trials_completed": 15,
+  "n_trials_pruned": 4,
+  "timeout_s": 2100,
+  "elapsed_seconds": 2191.5,
+  "best_trial_number": 13,
+  "best_search_mean": 0.964832309410455,
+  "best_params": {
+    "max_depth": 6,
+    "learning_rate": 0.09325149116070401,
+    "min_child_weight": 1.788210444939318,
+    "subsample": 0.6750035308187989,
+    "colsample_bytree": 0.7556584632880704,
+    "reg_alpha": 0.0010167682865576829,
+    "reg_lambda": 0.056561467651267544,
+    "gamma": 1.064613660768255
+  },
+  "best_n_estimators_fixed": 798,
+  "report_fold_scores": [
+    0.9653865931248512,
+    0.964624486192602,
+    0.9645144180964617,
+    0.9649023266082968,
+    0.9647214625956972
+  ],
+  "report_mean": 0.9648298573235816,
+  "report_std": 0.00030614871357607465,
+  "mlflow_parent_run_id": "241ebbaae0aa42f1b0758e9cf870e675",
+  "class_order": [
+    "GALAXY",
+    "QSO",
+    "STAR"
+  ]
+}

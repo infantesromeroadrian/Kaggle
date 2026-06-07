@@ -10,6 +10,7 @@ My Kaggle competition solutions — one subdirectory per challenge.
 | [playground-s6e4](./playground-s6e4) | Irrigation-need prediction (multiclass) | `balanced_accuracy` | Public LB **0.97111** / Private LB **0.97242** | Documentation of results only |
 | [playground-s6e3](./playground-s6e3) | Customer churn prediction (binary) | `ROC AUC` | Public LB **0.91461** / Private LB **0.91580** | Documentation of results only |
 | [triagegeist](./triagegeist) | Emergency-triage acuity prediction (hackathon) | — | See subdir | Includes code |
+| [nvidia-nemotron-reasoning](./nvidia-nemotron-reasoning) | LLM reasoning — SFT of Nemotron 3 Nano 30B with Chain-of-Thought data (LoRA) | — | Public LB **0.61** (Featured, ~4,041 teams) | Includes code (notebooks) |
 
 ## Methodology
 

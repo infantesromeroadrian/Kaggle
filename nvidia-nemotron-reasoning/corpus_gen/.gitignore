@@ -1,0 +1,11 @@
+# Python bytecode caches produced by importing the reasoner modules.
+__pycache__/
+*.pyc
+
+# Ruff lint cache.
+.ruff_cache/
+
+# Generated corpus — reproducible from build_corpus.py + competition train.csv.
+# Data artifacts do not belong in version control.
+cot_corpus_v1.jsonl
+*.jsonl

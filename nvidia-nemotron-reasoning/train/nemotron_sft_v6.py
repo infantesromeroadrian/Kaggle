@@ -383,167 +383,125 @@ print("Category mix:", Counter(ex.get("type", "?") for ex in examples).most_comm
 
 
 # === CELL 6 ===========================================================================
-# FIX 1: COMPLETION-ONLY LOSS MASKING, built POSITIONALLY (pad == eos).
+# FIX 1 (v6.1): COMPLETION-ONLY LOSS MASKING via PROMPT + COMPLETION CONCATENATION.
 #
-# Why positional and not by value: pad_token_id == eos_token_id on this tokenizer. If we
-# masked "all eos" we would also mask the ONE terminal EOS that ends the real completion,
-# and the model would never learn to stop -- runaway generations and \boxed{} parse
-# failures at temp=0. Instead we compute the prompt length L from the chat template and
-# mask labels[:L] = -100 by INDEX. Everything after L (the assistant <think> CoT, the
-# \boxed{} answer, and the single terminal EOS that the assistant turn emits) stays
-# supervised. Trailing PAD positions added later by the collator are masked there, by
-# index, while the one real terminal EOS inside the sequence is preserved.
+# The earlier v6 derived the masked prompt length L by asserting that
+# apply_chat_template(messages[:-1], add_generation_prompt=True) is a TOKEN-EXACT PREFIX of
+# apply_chat_template(messages, add_generation_prompt=False). That invariant is FALSE for
+# this Nemotron template and silently dropped ALL 6046 rows (verified on the Kaggle
+# tokenizer). Nemotron uses a REASONING template: at generation time it opens the assistant
+# turn with "<|im_start|>assistant\n<think>\n", but when it renders a COMPLETED assistant
+# message whose content does not itself start with "<think>", it splices the content
+# directly after "assistant\n" WITHOUT the "<think>\n" opener. So the prompt rendering and
+# the full-conversation rendering DIVERGE right after the assistant header, the
+# longest-common-prefix collapses, and every row falls out as "no-supervision".
+# (Separately, apply_chat_template(tokenize=True) on this stack returned a 2-element
+# Encoding list, not a token-id list -- another reason to avoid that path entirely.)
 #
-# Prompt length recipe (mirrors the corpus builder): L is the token length of the chat
-# template applied to messages[:-1] with add_generation_prompt=True. That template emits
-# the system+user turns AND the assistant header AND the opening "<think>\n" -- exactly
-# the span we want masked. The completion is everything the assistant generated after that
-# opener, which we get by tokenizing the FULL conversation (add_generation_prompt=False)
-# and slicing [L:].
+# The robust construction -- which matches the winner's 2-segment masking and, crucially,
+# matches INFERENCE exactly -- is to build the training sequence by CONCATENATION:
+#   prompt_ids     = encode( apply_chat_template(messages[:-1], add_generation_prompt=True,
+#                            tokenize=False) )             # ends "...assistant\n<think>\n"
+#   completion_ids = encode( assistant_content ) + [EOS]   # CoT</think>\boxed{}<|im_end|>
+#   input_ids = prompt_ids + completion_ids
+#   labels    = [-100]*len(prompt_ids) + completion_ids
+# The prompt-prefix invariant is now TRUE BY CONSTRUCTION (input_ids literally starts with
+# prompt_ids), so there is no LCP guesswork. At eval the harness feeds
+# apply_chat_template(..., add_generation_prompt=True) to vLLM, which renders the SAME
+# "<think>\n" opener and then generates the completion -- so what we supervise is exactly
+# what the model must produce. Verified on Kaggle (nemotron-mask-verify): kept 6046/6046,
+# 0 dropped, prompt tail "...assistant\n<think>\n", completion "The cipher is ...
+# \boxed{...}<|im_end|>", last id == EOS.
 #
-# BLOCKER 1 -- the prefix invariant is NOT free. labels[:L] = -100 is only correct if
-# prompt_ids (apply_chat_template(messages[:-1], add_generation_prompt=True)) is a
-# TOKEN-EXACT PREFIX of full_ids (apply_chat_template(messages, add_generation_prompt=
-# False)). HF chat templates do NOT guarantee this: the assistant branch can re-render the
-# opening <think> differently, and a BPE seam at the prompt/completion boundary can merge
-# the last prompt char with the first completion char into one token, shifting every id
-# after the seam. If that happens, a fixed L either leaks completion tokens into the masked
-# span (under-supervision) or supervises prompt tokens (label noise). So we VERIFY the
-# invariant per row with token-id equality (full_ids[:L] == prompt_ids). On mismatch we
-# fall back to the actual longest-common-prefix length between full_ids and prompt_ids
-# (which is the true boundary) and count it; if that common prefix is implausibly short we
-# drop the row rather than train on a corrupted mask.
-#
-# BLOCKER 2 -- right-truncation at MAX_SEQ_LENGTH can decapitate the completion: it can cut
-# the closing </think>+\boxed{}+terminal EOS while leaving earlier supervised tokens,
-# training a "never-stop" completion. After truncation we therefore verify, per row, that
-# the supervised span STILL ends in exactly one terminal EOS and still contains '\boxed{';
-# rows that fail are dropped and counted (we do NOT rely on a 3-sample assertion).
+# pad_token_id == eos_token_id (CELL 2 set it). Masking is positional: the ONE terminal EOS
+# inside the completion is supervised; trailing PADs appended later by the collator are
+# masked there, by index. MAX_SEQ_LENGTH truncation is right-side; if it ever cut the
+# completion tail we DROP the row (BLOCKER 2) rather than teach a "never stop" target.
+# Empirically no current row exceeds ~766 tokens, so truncation never fires -- the guard
+# stays for future long-CoT categories (e.g. bit_manipulation).
 
 from torch.utils.data import Dataset
 
-# Plausibility floor for the longest-common-prefix fallback (BLOCKER 1). If the rendered
-# prompt and the full conversation only agree on less than half of the prompt's tokens, the
-# template is doing something we did not anticipate (different system turn, reordered
-# header) and the resulting mask cannot be trusted -- drop the row instead.
-MIN_PREFIX_RATIO = 0.5
+EOS_ID = tokenizer.eos_token_id
 
-# Drop / repair counters, populated during dataset construction and printed once.
-_PREFIX_EXACT = 0          # rows where full_ids[:L] == prompt_ids exactly.
-_PREFIX_REPAIRED = 0       # rows repaired via longest-common-prefix fallback.
-_DROP_PREFIX_SHORT = 0     # rows dropped: common prefix implausibly short.
-_DROP_TRUNCATED = 0        # rows dropped: truncation decapitated the completion.
-_DROP_NO_SUPERVISION = 0   # rows dropped: no supervised token at all.
-
-
-def _longest_common_prefix_len(a, b) -> int:
-    """Number of leading elements a and b share (token-id equality)."""
-    n = 0
-    for x, y in zip(a, b):
-        if x != y:
-            break
-        n += 1
-    return n
+# Drop counters, populated during dataset construction and printed once.
+_DROP_TRUNCATED = 0       # rows dropped: right-truncation decapitated the completion.
+_DROP_NO_SUPERVISION = 0  # rows dropped: prompt alone filled the budget (no target left).
 
 
 def encode_example(ex) -> dict | None:
-    """Tokenize one SFT row into {input_ids, attention_mask, labels} with completion-only
-    labels, or return None if the row must be dropped (untrustworthy mask, or truncation
-    decapitated the completion). No padding here -- the collator pads dynamically (FIX 5).
-
-    Verifies the prompt-prefix invariant (BLOCKER 1) and the post-truncation completion
-    integrity (BLOCKER 2) on this single row; mutates the module-level drop/repair counters.
-    """
-    global _PREFIX_EXACT, _PREFIX_REPAIRED, _DROP_PREFIX_SHORT
+    """Tokenize one SFT row into {input_ids, attention_mask, labels, prompt_len} with
+    completion-only labels, or None if the row must be dropped. Built by concatenation, so
+    labels[:prompt_len] == -100 is correct BY CONSTRUCTION (no prefix guesswork). No padding
+    here -- the collator pads dynamically (FIX 5)."""
     global _DROP_TRUNCATED, _DROP_NO_SUPERVISION
     messages = ex["messages"]
+    assistant_content = messages[-1]["content"]
 
-    # Render BOTH templates ONCE each (no duplicate calls): the prompt context (with the
-    # assistant header + opening <think>) and the full conversation (real assistant turn).
-    prompt_ids = tokenizer.apply_chat_template(
-        messages[:-1],  # drop the assistant turn; we want only the prompt context
-        add_generation_prompt=True,  # appends assistant header + opening <think>\n
-        tokenize=True,
-        add_special_tokens=False,  # the template already inserts the BOS/role specials
+    # Prompt context, rendered to TEXT then tokenized. add_generation_prompt=True appends the
+    # assistant header + the "<think>\n" opener (the reasoning-template generation cue). We
+    # render to text and encode it -- NOT apply_chat_template(tokenize=True), which is broken
+    # on this stack (returns Encoding objects, not ids).
+    prompt_text = tokenizer.apply_chat_template(
+        messages[:-1],
+        add_generation_prompt=True,
+        tokenize=False,
     )
-    full_ids = tokenizer.apply_chat_template(
-        messages,
-        add_generation_prompt=False,
-        tokenize=True,
-        add_special_tokens=False,
-    )
+    prompt_ids = tokenizer.encode(prompt_text, add_special_tokens=False)
 
-    # --- BLOCKER 1: verify prompt_ids is a token-exact prefix of full_ids ---------------
-    # The masked length L must be a real boundary in full_ids, not an assumed one.
-    if full_ids[: len(prompt_ids)] == prompt_ids:
-        L = len(prompt_ids)
-        _PREFIX_EXACT += 1
-    else:
-        # Templates diverged (assistant-branch <think> re-render, or a BPE seam merge at
-        # the boundary). Fall back to the TRUE shared boundary: the longest common prefix.
-        L = _longest_common_prefix_len(full_ids, prompt_ids)
-        if L < int(MIN_PREFIX_RATIO * len(prompt_ids)):
-            # Implausibly short agreement -> the mask cannot be trusted. Drop.
-            _DROP_PREFIX_SHORT += 1
+    # Completion = the assistant CoT (which already carries its own closing </think> and the
+    # \boxed{answer}) followed by the single terminal EOS the model must emit to stop.
+    completion_ids = tokenizer.encode(assistant_content, add_special_tokens=False) + [EOS_ID]
+
+    input_ids = prompt_ids + completion_ids
+    labels = [-100] * len(prompt_ids) + list(completion_ids)
+
+    # BLOCKER 2: right-truncate, THEN verify the completion survived. A cut that drops the
+    # closing </think>+\boxed{}+EOS while keeping earlier CoT tokens would train a
+    # "never-stop" target -> drop the row instead.
+    if len(input_ids) > MAX_SEQ_LENGTH:
+        input_ids = input_ids[:MAX_SEQ_LENGTH]
+        labels = labels[:MAX_SEQ_LENGTH]
+        supervised_ids = [t for t in labels if t != -100]
+        ends_in_single_eos = bool(supervised_ids) and (
+            supervised_ids[-1] == EOS_ID
+            and (len(supervised_ids) == 1 or supervised_ids[-2] != EOS_ID)
+        )
+        has_boxed = bool(supervised_ids) and "\\boxed{" in tokenizer.decode(
+            supervised_ids, skip_special_tokens=False
+        )
+        if not (ends_in_single_eos and has_boxed):
+            _DROP_TRUNCATED += 1
             return None
-        _PREFIX_REPAIRED += 1
 
-    # --- BLOCKER 2: right-truncate, THEN verify the completion survived -----------------
-    # Right-truncation (HF default) can cut the closing </think>+\boxed{}+EOS while leaving
-    # earlier supervised tokens. We truncate first, then check the supervised span still
-    # terminates cleanly; if not, the row is unusable for a "stop here" signal -> drop.
-    full_ids = full_ids[:MAX_SEQ_LENGTH]
-
-    if L >= len(full_ids):
+    if len(prompt_ids) >= len(input_ids):
         # Prompt alone fills the budget: nothing supervised survives. Drop.
         _DROP_NO_SUPERVISION += 1
         return None
 
-    labels = list(full_ids)
-    for i in range(L):
-        labels[i] = -100  # FIX 1: mask the entire prompt span by index.
-
-    supervised_ids = full_ids[L:]
-    # The supervised span must end in EXACTLY one terminal EOS (the very last token is EOS,
-    # and the token before it is NOT EOS so we are not supervising a runaway pad/eos tail)
-    # AND must still contain the boxed answer marker. Decode once for the '\boxed{' check.
-    ends_in_single_eos = (
-        supervised_ids[-1] == tokenizer.eos_token_id
-        and (len(supervised_ids) == 1 or supervised_ids[-2] != tokenizer.eos_token_id)
-    )
-    has_boxed = "\\boxed{" in tokenizer.decode(
-        supervised_ids, skip_special_tokens=False
-    )
-    if not (ends_in_single_eos and has_boxed):
-        _DROP_TRUNCATED += 1
-        return None
-
     return {
-        "input_ids": full_ids,
-        "attention_mask": [1] * len(full_ids),
+        "input_ids": input_ids,
+        "attention_mask": [1] * len(input_ids),
         "labels": labels,
-        "prompt_len": L,  # carried for the corpus-wide assertions below; dropped by collator.
+        "prompt_len": len(prompt_ids),  # consumed by CELL 7 assertions; dropped by collator.
     }
 
 
 class SFTDataset(Dataset):
-    """Pre-tokenized, completion-only-masked, UNPADDED examples. Rows whose mask could not
-    be verified (BLOCKER 1) or whose completion was decapitated by truncation (BLOCKER 2)
-    are dropped during construction and reported in the printed counts."""
+    """Pre-tokenized, completion-only-masked, UNPADDED examples. Rows whose completion was
+    decapitated by truncation (BLOCKER 2) or that left no supervised target are dropped
+    during construction and reported in the printed counts."""
 
     def __init__(self, rows):
         self.items = []
         for ex in rows:
             enc = encode_example(ex)
-            if enc is None:  # row dropped; counters already updated inside encode_example.
+            if enc is None:  # counters already updated inside encode_example.
                 continue
             self.items.append(enc)
-        total = len(rows)
         print(
-            f"SFTDataset: kept {len(self.items)} / {total}. "
-            f"Prefix: {_PREFIX_EXACT} exact, {_PREFIX_REPAIRED} repaired (LCP fallback). "
-            f"Dropped: {_DROP_PREFIX_SHORT} short-prefix, "
-            f"{_DROP_TRUNCATED} truncated-completion, "
+            f"SFTDataset: kept {len(self.items)} / {len(rows)}. "
+            f"Dropped: {_DROP_TRUNCATED} truncated-completion, "
             f"{_DROP_NO_SUPERVISION} no-supervision."
         )
 
@@ -555,11 +513,20 @@ class SFTDataset(Dataset):
 
 
 # Shuffle once for good category mixing. NOTE: the winner used per-batch category
-# stratification (every batch an even mix of the 9 categories). A seeded global shuffle is
-# a cheap approximation; a true stratified sampler is a Phase-C-adjacent improvement (see
+# stratification (every batch an even mix of the categories). A seeded global shuffle is a
+# cheap approximation; a true stratified sampler is a Phase-C-adjacent improvement (see
 # STRATEGY.md). We keep the shuffle deterministic via SEED.
 random.Random(SEED).shuffle(examples)
 train_ds = SFTDataset(examples)
+
+# FAIL LOUD on a fully-empty dataset. The prior v6 silently produced 0 rows (template/mask
+# mismatch) and only crashed much later in a stats call -- an assertion here names the real
+# cause instead of leaving a cryptic StatisticsError.
+assert len(train_ds) > 0, (
+    "SFTDataset kept 0 rows -- every row was dropped. This indicates a prompt/template or "
+    "EOS mismatch in encode_example (CELL 6), NOT a hardware problem. Inspect the drop "
+    "counts printed above before re-running."
+)
 print(f"Train examples: {len(train_ds)}")
 
 

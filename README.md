@@ -6,11 +6,13 @@ My Kaggle competition solutions — one subdirectory per challenge.
 
 | Challenge (dir) | Task | Metric | Best Result | Notes |
 |---|---|---|---|---|
-| [playground-s6e6](./playground-s6e6) | Stellar classification (GALAXY / STAR / QSO) from synthetic SDSS photometry | `balanced_accuracy` | Public LB **0.96625**, rank **361 / 965 (top 37%)** | Includes code |
+| [playground-s6e6](./playground-s6e6) | Stellar classification (GALAXY / STAR / QSO) from synthetic SDSS photometry | `balanced_accuracy` | Public LB **0.96625** · final rank **1,097 / 2,816 (top 39%)** | Includes code |
 | [playground-s6e4](./playground-s6e4) | Irrigation-need prediction (multiclass) | `balanced_accuracy` | Public LB **0.97111** / Private LB **0.97242** | Documentation of results only |
 | [playground-s6e3](./playground-s6e3) | Customer churn prediction (binary) | `ROC AUC` | Public LB **0.91461** / Private LB **0.91580** | Documentation of results only |
 | [triagegeist](./triagegeist) | Emergency-triage acuity prediction (hackathon) | — | See subdir | Includes code |
-| [nvidia-nemotron-reasoning](./nvidia-nemotron-reasoning) | LLM reasoning — SFT of Nemotron 3 Nano 30B with Chain-of-Thought data (LoRA) | — | Public LB **0.61** (Featured, ~4,041 teams) | Includes code (notebooks) |
+| [nvidia-nemotron-reasoning](./nvidia-nemotron-reasoning) | LLM reasoning — SFT of Nemotron 3 Nano 30B with Chain-of-Thought data (LoRA) | — | Final rank **3,192 / 4,185** (Featured) · best public LB **0.636** | Includes code (notebooks) |
+
+Final ranks: [Kaggle competitions profile](https://www.kaggle.com/adrininfantesromero/competitions), consulted 2026-11-07.
 
 ## Methodology
 

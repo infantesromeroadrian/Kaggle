@@ -27,6 +27,9 @@ galaxies at intermediate values, quasars (QSOs) at high values with a long tail.
 **Public leaderboard (snapshot 2026-06-07):** rank **361 / 965 teams (top ~37%)**, score **0.96625**
 balanced_accuracy. Submissions used: 2 (LightGBM-only 0.96521, then tuned ensemble 0.96625).
 
+**Final standing (competition closed):** rank **1,097 / 2,816 teams (top 39%)**, per the
+[Kaggle competitions profile](https://www.kaggle.com/adrininfantesromero/competitions), consulted 2026-11-07.
+
 **Final model:** soft-voting blend of three gradient-boosted tree models. Weights selected by
 nested cross-validation: LightGBM 0.500 / CatBoost 0.083 / XGBoost 0.417.  
 **Submissions:** 2 total. LB improved monotonically (CV conservative throughout).

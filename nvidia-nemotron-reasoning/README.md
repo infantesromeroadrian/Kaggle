@@ -4,8 +4,9 @@ Supervised Fine-Tuning (SFT) of NVIDIA Nemotron 3 Nano 30B for the NVIDIA Nemotr
 
 ## Result
 
-**Public leaderboard: 0.61** (best submission, adapter v2).
-Featured competition — ~4,041 teams — deadline 2026-06-15.
+**Final leaderboard rank: 3,192 / 4,185 teams** (Featured competition, closed 2026-06-15;
+source: [Kaggle competitions profile](https://www.kaggle.com/adrininfantesromero/competitions), consulted 2026-11-07).
+**Best public leaderboard score: 0.636** (v6 submission, 2026-06-08).
 Competition page: [NVIDIA Nemotron Model Reasoning Challenge](https://www.kaggle.com/competitions/nvidia-nemotron-model-reasoning-challenge)
 
 ## Model and approach
@@ -25,17 +26,18 @@ Training ran entirely on Kaggle GPU (NVIDIA RTX Pro 6000) with `enable_internet=
 
 | Adapter | Public LB | Status |
 |---|---|---|
-| v2 (nemotron-sft-adapter-v1) | **0.61** | COMPLETE — best result |
-| v4 | 0.58 | COMPLETE |
+| v2 (nemotron-sft-adapter-v1) | 0.616 | COMPLETE |
+| v4 | 0.588 | COMPLETE |
+| v6 (`train/nemotron_sft_v6.py`) | **0.636** | COMPLETE — best public score |
 
 ## Notebooks
 
 | Notebook | Role |
 |---|---|
 | `nemotron-sft-cot-training.ipynb` | Builds the CoT training pipeline from scratch: loads the base model, applies LoRA, loads the custom CoT dataset from `nemotron-cot-training-data`, trains for 3 epochs (seq len 2048, effective batch 8), and saves the LoRA adapter + `submission.zip`. First working version with verbose path resolution and dataset statistics. |
-| `nemotron-sft-v2.ipynb` | Refactored iteration of the training pipeline: adds the `ptxas-blackwell` binary patch required by the Kaggle BYOD environment, condenses the setup boilerplate, and reproduces the same 3-epoch training run. This adapter achieved public LB **0.61**. |
+| `nemotron-sft-v2.ipynb` | Refactored iteration of the training pipeline: adds the `ptxas-blackwell` binary patch required by the Kaggle BYOD environment, condenses the setup boilerplate, and reproduces the same 3-epoch training run. This adapter achieved public LB **0.616**. |
 | `nemotron-sft-v3.ipynb` | Third iteration: same architecture as v2 but switches `eval_strategy` from `steps` to `no` and moves to epoch-level checkpointing (`save_strategy='epoch'`, `save_total_limit=1`), removing mid-training evaluation overhead. |
-| `nemotron-sft-v4.ipynb` | Sequence-length experiment: reduces `MAX_SEQ_LENGTH` from 2048 to 1024 based on observed token-length distribution of the CoT data (mean ~419 tokens, max ~657). Doubles per-device batch size to 2 and halves gradient accumulation to 4, keeping effective batch size constant. Public LB 0.58. |
+| `nemotron-sft-v4.ipynb` | Sequence-length experiment: reduces `MAX_SEQ_LENGTH` from 2048 to 1024 based on observed token-length distribution of the CoT data (mean ~419 tokens, max ~657). Doubles per-device batch size to 2 and halves gradient accumulation to 4, keeping effective batch size constant. Public LB 0.588. |
 | `nemotron-sft-v5.ipynb` | Single-epoch experiment with the v3 CoT dataset variant (includes `<think>` tags and weighted oversampling of under-represented reasoning types): trains for 1 epoch instead of 3 to reduce overfitting on the CoT template format. Disables checkpointing (`save_strategy='no'`). |
 | `nemotron-submit.ipynb` | Submission-only utility: locates a pre-trained LoRA adapter from a Kaggle dataset input, copies `adapter_config.json` and `adapter_model.safetensors` to the working directory, and packages them into `submission.zip` for upload — no training involved. |
 
